@@ -10,19 +10,29 @@ module tt_um_example (
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
     output wire [7:0] uio_out,  // IOs: Output path
-    output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
-    input  wire       clk,      // clock
-    input  wire       rst_n     // reset_n - low to reset
+    output wire [7:0] uio_oe,   // IOs: Enable path (0=input, 1=output)
+    input  wire       ena,      // Always 1 when powered
+    input  wire       clk,      // Clock
+    input  wire       rst_n     // Active-low reset
 );
 
-  assign uo_out = ui_in[3:0] * ui_in[7:4];
+  // Registered output to avoid GL test issues
+  reg [7:0] result;
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
+      result <= 8'd0;
+    else
+      result <= ui_in[3:0] * ui_in[7:4];
+  end
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{uio_in, ena, clk, rst_n, 1'b0};
+  assign uo_out = result;
+
+  // IOs unused
+  assign uio_out = 8'd0;
+  assign uio_oe  = 8'd0;
+
+  // Prevent unused warnings
+  wire _unused = &{uio_in, ena, 1'b0};
 
 endmodule
